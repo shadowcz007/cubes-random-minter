@@ -138,6 +138,7 @@ function create(){
       });
       renderer.outputEncoding = THREE.LinearEncoding;
       renderer.setSize(width, height, false);
+	renderer.setPixelRatio(2);
 			// renderer.setSize( window.innerWidth, window.innerHeight );
 			// document.body.appendChild( renderer.domElement );
 
