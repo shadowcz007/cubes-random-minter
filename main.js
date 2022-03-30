@@ -9,7 +9,7 @@ const _isDev=parseParams('dev');
 console.log(_isDev)
 
 const _TITLE=window.location.pathname.slice(1,-1).replace(/\/.*/ig,'')||"nft-minter";
-const _DES='site-'+window.location.hostname;
+const _DES=window.location.hostname+window.location.pathname;
 
 // 获取地址栏参数
 function parseParams(name){
@@ -138,7 +138,7 @@ function create(){
       });
       renderer.outputEncoding = THREE.LinearEncoding;
       renderer.setSize(width, height, false);
-	renderer.setPixelRatio(2);
+      renderer.setPixelRatio(2);
 			// renderer.setSize( window.innerWidth, window.innerHeight );
 			// document.body.appendChild( renderer.domElement );
 
