@@ -177,6 +177,7 @@ function createGeometry() {
 
 function create(){
       const scene = new THREE.Scene();
+      scene.background = new THREE.Color( 0x000000 );
 			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
       let canvas=document.querySelector('#target'),
@@ -300,7 +301,7 @@ function create(){
                 count--;
               };
             }
-            const time = Date.now() * 0.0025;
+            const time = Date.now() * 0.0035;
 
             light1.position.x = Math.sin( time * 0.7 ) * 30;
             light1.position.y = Math.cos( time * 0.5 ) * 40;
