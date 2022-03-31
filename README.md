@@ -1,21 +1,34 @@
-# cubes-random-minter
-- 人人都是艺术家
-- 3D generative art NFT minter dapp built with Moralis, Rarible Plugin and Javascript
+![dapp](dapp.png)
 
-# 特性
+# cubes-random-minter
+- Everyone is an artist，3D generative art NFT minter dapp
+
+- 人人都是艺术家，使用moralis的rarible插件完成的dapp应用。使用生成艺术、用户与机器共创（反复点击图片即可生成新的结果）、使用lazy-mint，无gas费即可上架。
+
+# features
 - 3D generative art
 
-使用threejs、moralis完成的生成艺术铸造dapp。
+3D generative art NFT minter dapp built with Moralis, Rarible Plugin and Javascript
 
-- co-creation 
+- co-creation
 
-切换到以太坊主网，然后点击图片，当动画停止时，可以选择是否要mint，重复点击图片，获得不同的生成结果。
+Switch to the Ethereum mainnet, and then tap on the image, when the animation stops, you can choose whether you want mint, click on the image repeatedly, get different generation results.
+
 
 - lazy-mint
 
-使用lazy-mint的方式，无gas费即可上架。
+Using the lazi-mint way, it can be listed without gas fees.
 
 
 # exmaple
+![rarible](example-rarible.png)
 
 [rarible link](https://rarible.com/token/0xf6793da657495ffeff9ee6350824910abc21356c:37268655778482429449284118906968186200180468563238146401157742791608739299342?tab=details)
+
+
+## Support
+- [Discord](https://discord.gg/x7GsmuTQjV)
+
+
+## License
+[![License](https://img.shields.io/:license-mit-blue.svg?style=flat-square)](LICENSE)
