@@ -1,8 +1,8 @@
 # cubes-random-minter
 
+NFT Minter Dapp built with Moralis, Rarible Plugin and Javascript
+
 threejs+moralis
-
-
 
 ## exmaple
 
