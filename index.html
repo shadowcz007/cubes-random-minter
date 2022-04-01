@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/three@0.139.0/build/three.js"></script>
     <!-- <script src="https://unpkg.com/three@0.139.0/examples/js/utils/GeometryUtils.js"></script> -->
     
+    <script src='https://unpkg.com/mini-gif@1.0.0/dist/mini-gif.umd.js'></script>
     <style>
         body{
             text-align: center;
@@ -64,6 +65,7 @@
             height: 400px;
             background: black;
             cursor: pointer;
+            outline: 1px solid #cecece;
         }
         button{
             height: 44px;
@@ -71,6 +73,9 @@
             font-size: 14px;
             font-weight: 800;
             cursor: pointer;
+        }
+        .buttons{
+            margin-top: 12px;
         }
         .mini-button{
             background: #4549f2;
@@ -102,6 +107,11 @@
         .blur{
             filter: blur(2px);
         }
+        .select{
+            background-color: #00bcd4;
+            border: none;
+            color: white;
+        }
     </style>
   </head>
 
@@ -119,7 +129,11 @@
                     <div style="display: flex;
                     flex-direction: column;">
                         <canvas id="target"></canvas>
-                        <button id="input_refresh">REFRESH</button>
+                        <div class="buttons">
+                            <button id="input_gif" class="select">GIF</button>
+                            <button id="input_png">PNG</button>
+                            <button id="input_refresh">CREATE</button>
+                        </div>
                     </div>
                     <div style="display: flex;
                     flex-direction: column;
@@ -133,7 +147,7 @@
                         </div>
                         <div class="form_element">
                             <div class="item-title">VERSION</div>
-                            <div class="item-content" id="input_version">1.1</div>
+                            <div class="item-content" id="input_version">1.2</div>
                         </div>
                         <div class="form_element">
                             <div class="item-title">DESCRIPTION</div>

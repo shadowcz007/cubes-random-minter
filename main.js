@@ -14,6 +14,7 @@ const _DES=window.location.hostname+window.location.pathname;
 
 window.cubes=[];
 window.animateIsFinish=true;
+window.createType='gif';
 
 initApp();
 checkUserStatus();
@@ -71,7 +72,7 @@ function checkUserStatus(){
 function userLogin(){
   document.querySelector("#login").innerText='LOGOUT';
   document.querySelector(".loading").style.display="none";
-  document.querySelector("#submit_button").removeAttribute('disabled');
+  // document.querySelector("#submit_button").removeAttribute('disabled');
   document.querySelector(".container").classList.remove('blur');
 }
 function userLogout(){
@@ -88,7 +89,10 @@ function initApp(){
     document.querySelector("#app").style.display = "flex";
     document.querySelector("#submit_button").onclick = submit;
     document.querySelector("#input_refresh").onclick = runAnimate;
-    document.querySelector("#target").onclick = runAnimate;
+    document.querySelector("#target").onclick =()=>document.querySelector("#input_refresh").click();
+    document.querySelector("#input_gif").onclick=()=>changeCreateType("gif");
+    document.querySelector("#input_png").onclick=()=>changeCreateType("png");
+    
 
     // your id
     const fpPromise = import('https://openfpcdn.io/fingerprintjs/v3')
@@ -115,20 +119,137 @@ function initApp(){
 
 };
 
-async function submit(){
-   
-    let message=document.querySelector('#success_message');
-    message.innerHTML = `- ipfs - init`;
-    message.style.display = "block";
+function changeCreateType(t){
+  window.createType=t;
+  if(t=='gif'){
+     document.querySelector("#input_gif").classList.add("select");
+     document.querySelector("#input_png").classList.remove("select");
+  }else{
+    document.querySelector("#input_gif").classList.remove("select");
+    document.querySelector("#input_png").classList.add("select");
+  }
+}
 
-    let base64=getTargetResult();
+function disableCreateButtons(){
+  document.querySelector("#input_gif").setAttribute('disabled',true);
+  document.querySelector("#input_png").setAttribute('disabled',true);
+  document.querySelector("#input_refresh").setAttribute('disabled',true);
+  document.querySelector("#submit_button").setAttribute('disabled',true);
+  document.querySelector("#success_message").style.display='none';
+  
+}
+function enableCreateButtons(){
+  document.querySelector("#input_gif").removeAttribute('disabled');
+  document.querySelector("#input_png").removeAttribute('disabled');
+  document.querySelector("#input_refresh").removeAttribute('disabled');
+  document.querySelector("#submit_button").removeAttribute('disabled');
+}
+
+
+function runAnimate(){
+ 
+  disableCreateButtons();
+  window.animateTime=window.createType==='gif'?1500:3500+(3000*Math.random());
+  window.animateIsFinish?window.animateIsFinish=false:null;
+  window.spherify=Math.random()*1.2;
+  window.twist=Math.random()*1.2;
+  window.cubes=shuffle(window.cubes);
+  
+  if(window.createType==='gif'){
+    createGifFromAnimate(window.animateTime||1000).then(()=> enableCreateButtons())
+  };
+
+  // 动画终止
+  setTimeout(()=>{
+      window.animateIsFinish=true;
+      if(window.createType==='png')enableCreateButtons();
+    },window.animateTime||1000);
+  
+
+  // 打乱
+  function shuffle (arr) {
+    let arrNew = [...arr]
+    //用Math.random()函数生成0~1之间的随机数与0.5比较，返回-1或1
+    const randomsort = function (a, b) {
+      return Math.random() > 0.5 ? -1 : 1
+    }
+    // var arr = [1, 2, 3, 4, 5];
+    return [...arrNew.sort(randomsort)]
+  }
+}
+
+async function createGifFromAnimate(t=2000,fps=12){
+  window.ctxs=[];
+  window.fps=fps;
+  for(var i=0;i<(t/1000)*fps;i++){
+      await sleep(1000/fps)
+      let ctx=await canvasClone2Ctx(renderer.domElement);
+      window.ctxs.push(ctx);
+  };
+}
+
+function canvasClone2Ctx(canvas){
+  let c=document.createElement('canvas');
+  let ctx=c.getContext('2d');
+  c.width=canvas.width;
+  c.height=canvas.height;
+  ctx.drawImage(canvas,0,0,c.width,c.height);
+  return ctx;
+}
+function blobToBase64(blob) {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
+function sleep(m=1000){
+  return  new Promise(r => setTimeout(r, m))
+} 
+
+function createGif(ctxs=[],delay=200){
+  
+  const encoder = new minigif.GIFEncoder();
+  encoder.setRepeat(0);   // loop forever
+  encoder.setDelay(delay);  // go to next frame every 100 ms
+  encoder.start();        // write header
+
+  for (const ctx of ctxs) {
+   encoder.addFrame(ctx);  // Render the frame from the canvas context.
+  }
+  
+  encoder.finish();       // finsh
+  const arr = encoder.stream().getUnit8Array();  //获取生成的Unit8Array
+  // const file = new Blob([arr]);                  //生成文件
+  // const url = URL.createObjectURL(new Blob([res],{type: 'image/gif'}));        //获取浏览器可用的地址
+ 
+  return blobToBase64(new Blob([arr],{type: 'image/gif'}));
+}
+
+async function submit(){
+   if(!animateIsFinish) return;
+    disableCreateButtons();
+   let message=document.querySelector('#success_message');
+  message.style.display = "block";
+   let base64;
+   if(window.createType=='gif' && window.ctxs&&window.ctxs.length>0){
+     message.innerHTML = `- gif - create`;
+     await sleep(200);
+     base64= await createGif(window.ctxs,1000/window.fps);
+   }
+   
+   if(window.createType=='png')base64=getTargetResult();
+    message.innerHTML = `- ipfs - init`;
+    
+
+    // let base64=getTargetResult();
     // const input = document.querySelector('#input_image');
     // let data = input.files[0]
-    const imageFile = new Moralis.File(_TITLE+'.png', { base64: base64 })
+    const imageFile = new Moralis.File(_TITLE+'.'+window.createType, { base64: base64 })
     await imageFile.saveIPFS();
     let imageHash = imageFile.hash();
 
-    message.innerHTML = `- ipfs - image-file-save`;
+    message.innerHTML = `- ipfs - image-${window.createType}-file-save`;
 
     let metadata = {
       // 仅支持英文
@@ -161,6 +282,7 @@ async function submit(){
     //     document.querySelector('#success_message').style.display = "none";
         
     // }, 1000)
+    enableCreateButtons();
 }
 
 
@@ -356,15 +478,13 @@ function create(){
             light4.position.x = Math.sin( time * 0.3 ) * 30;
             light4.position.y = Math.cos( time * 0.7 ) * 40;
             light4.position.z = Math.sin( time * 0.5 ) * 30;
-            if(!window.checkAnimate){
-              setTimeout(()=>window.animateIsFinish=true,3500+(3000*Math.random()));
-              window.checkAnimate=true;
-            }
+
             
             camera.position.x += ( mouseX - camera.position.x ) * 0.0001;
             camera.position.y += ( - mouseY - camera.position.y ) * 0.0001;
             camera.rotation.x += ( mouseX - camera.rotation.x ) * 0.000001;
             camera.rotation.y += ( - mouseY - camera.rotation.y ) * 0.000001;
+            
         }
 
 				// camera.lookAt( scene.position );
@@ -391,24 +511,6 @@ function create(){
 };
 
 
-
-function runAnimate(){
-  window.animateIsFinish?window.animateIsFinish=false:null;
-  window.checkAnimate?window.checkAnimate=false:null;
-  window.spherify=Math.random()*1.2;
-  window.twist=Math.random()*1.2;
-  window.cubes=shuffle(window.cubes);
-  // 打乱
-  function shuffle (arr) {
-    let arrNew = [...arr]
-    //用Math.random()函数生成0~1之间的随机数与0.5比较，返回-1或1
-    const randomsort = function (a, b) {
-      return Math.random() > 0.5 ? -1 : 1
-    }
-    // var arr = [1, 2, 3, 4, 5];
-    return [...arrNew.sort(randomsort)]
-  }
-}
 
 function drawText(){
     var drawingContext = drawingCanvas.getContext( '2d' );
