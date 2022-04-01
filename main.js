@@ -34,6 +34,12 @@ function createTimeStamp(){
 
 /** Add from here down */
 async function login() {
+  if(document.querySelector("#login").innerText=='LOGOUT'){
+    await Moralis.User.logOut();
+    user=null;
+    userLogout();
+    return;
+  }
   document.querySelector(".loading").style.display="flex";
   // user = await Moralis.authenticate({ signingMessage: "Welcome to "+_TITLE })
   if (!user) {
@@ -67,6 +73,12 @@ function userLogin(){
   document.querySelector(".loading").style.display="none";
   document.querySelector("#submit_button").removeAttribute('disabled');
   document.querySelector(".container").classList.remove('blur');
+}
+function userLogout(){
+  document.querySelector("#login").innerText='LOGIN';
+  document.querySelector(".loading").style.display="none";
+  document.querySelector("#submit_button").setAttribute('disabled',true);
+  document.querySelector(".container").classList.add('blur');
 }
 
 function initApp(){
