@@ -1,6 +1,6 @@
 ![dapp](dapp.png)
 
-# [cubes-random-minter](https://shadowcz007.github.io/cubes-random-minter/index.html)
+# [cubes-random-minter](https://shadowcz007.github.io/cubes-random-minter)
 - Everyone is an artist，3D generative art NFT minter dapp
 
 - 人人都是艺术家，使用moralis的rarible插件完成的dapp应用。使用生成艺术、用户与机器共创（反复点击图片即可生成新的结果）、使用lazy-mint，无gas费即可上架。
