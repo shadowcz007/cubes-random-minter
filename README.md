@@ -19,6 +19,9 @@ Switch to the Ethereum mainnet, and then tap on the image, when the animation st
 
 Using the lazi-mint way, it can be listed without gas fees.
 
+# feature
+- images: gif & png
+- 
 
 # exmaple
 ![rarible](example-rarible.png)
