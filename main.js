@@ -12,6 +12,12 @@ console.log(_isDev)
 const _TITLE=window.location.pathname.slice(1,-1).replace(/\/.*/ig,'')||"nft-minter";
 const _DES=window.location.hostname+window.location.pathname;
 
+window.cubes=[];
+window.animateIsFinish=true;
+
+initApp();
+checkUserStatus();
+
 // 获取地址栏参数
 function parseParams(name){
   if(!name)return
@@ -28,26 +34,48 @@ function createTimeStamp(){
 
 /** Add from here down */
 async function login() {
+  document.querySelector(".loading").style.display="flex";
+  // user = await Moralis.authenticate({ signingMessage: "Welcome to "+_TITLE })
   if (!user) {
    try {
-      user = await Moralis.authenticate({ signingMessage: "Hello World!" })
+      user = await Moralis.authenticate({ signingMessage: "Welcome to "+_TITLE })
       initApp();
+      userLogin();
    } catch(error) {
      console.log(error)
+     document.querySelector(".loading").style.display="none";
    }
-  }
-  else{
+  } else{
     Moralis.enableWeb3();
+    userLogin();
+    initApp();
+  }
+  
+}
+
+function checkUserStatus(){
+  
+  if (user){
+    Moralis.enableWeb3();
+    userLogin();
     initApp();
   }
 }
 
-
+function userLogin(){
+  document.querySelector("#login").innerText='LOGOUT';
+  document.querySelector(".loading").style.display="none";
+  document.querySelector("#submit_button").removeAttribute('disabled');
+  document.querySelector(".container").classList.remove('blur');
+}
 
 function initApp(){
+    document.querySelector("#title").innerText=_TITLE;
+    document.querySelector("#login").onclick=login;
+    document.querySelector("#open_github").onclick=()=>window.location.href='https://github.com/shadowcz007/cubes-random-minter';
     document.querySelector("#app").style.display = "flex";
     document.querySelector("#submit_button").onclick = submit;
-    // document.querySelector("#input_refresh").onclick = runAnimate;
+    document.querySelector("#input_refresh").onclick = runAnimate;
     document.querySelector("#target").onclick = runAnimate;
 
     // your id
@@ -123,7 +151,7 @@ async function submit(){
     // }, 1000)
 }
 
-window.cubes=[];
+
 
 function createGeometry() {
 
@@ -219,13 +247,11 @@ function create(){
         for (let index = -10; index < 10; index++) {
            let c=cube.clone();
            c.position.x=x;
-          c.position.y=cube.position.y+(index+1)*2;
+           c.position.y=cube.position.y+(index+1)*2;
            c.position.z=-2
-          scene.add(c);
-          window.cubes.push(c);
+           scene.add(c);
+           window.cubes.push(c);
         }
-      
-        
       }
       
 
@@ -239,24 +265,24 @@ function create(){
 			// scene.add( cube2 );
 
       //lights
-        const sphere = new THREE.SphereGeometry( 0.5, 16, 8 );
+        // const sphere = new THREE.SphereGeometry( 0.5, 16, 8 );
 				light1 = new THREE.PointLight( 0xff0040, 2, 50 );
-				light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
+				// light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
 				scene.add( light1 );
 
 				light2 = new THREE.PointLight( 0x0040ff, 2, 50 );
-				light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0040ff } ) ) );
+				// light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0040ff } ) ) );
 				scene.add( light2 );
 
 				light3 = new THREE.PointLight( 0x80ff80, 2, 50 );
-				light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x80ff80 } ) ) );
+				// light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x80ff80 } ) ) );
 				scene.add( light3 );
 
 				light4 = new THREE.PointLight( 0xffaa00, 2, 50 );
-				light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
+				// light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
 				scene.add( light4 );
         
-        scene.add( new THREE.AmbientLight( 0x8FBCD4, 0.4 ) );
+        scene.add( new THREE.AmbientLight( 0x8FBCD4,Math.random()+0.2 ) );
 
 			camera.position.z = 5;
 
@@ -393,7 +419,7 @@ function getTargetResult(){
     return png
 }
 
-login();
+// login();
 
 
 
