@@ -92,7 +92,9 @@ function initApp(){
     document.querySelector("#target").onclick =()=>document.querySelector("#input_refresh").click();
     document.querySelector("#input_gif").onclick=()=>changeCreateType("gif");
     document.querySelector("#input_png").onclick=()=>changeCreateType("png");
+    document.querySelector('#input_map').onclick=openFile;
     
+    initDragAndDrop(document, loadFile);
 
     // your id
     const fpPromise = import('https://openfpcdn.io/fingerprintjs/v3')
@@ -369,10 +371,15 @@ function create(){
 			// document.body.appendChild( renderer.domElement );
 
 			const geometry = createGeometry();
-      const material=new THREE.MeshPhongMaterial( { color: 0x808080, dithering: true } );
+      const material=new THREE.MeshPhongMaterial( { 
+        color: 0x808080,
+        shininess:70,
+        dithering: true } );
 			// const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 			const cube = new THREE.Mesh( geometry, material );
       cube.position.y=1.2;
+
+   
 			// scene.add( cube );
 
       // clone
@@ -416,7 +423,7 @@ function create(){
 				// light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
 				scene.add( light4 );
         
-        scene.add( new THREE.AmbientLight( 0x8FBCD4,Math.random()+0.2 ) );
+        scene.add( new THREE.AmbientLight( 0xffffff,Math.random()+0.2 ) );
 
 			camera.position.z = 5;
 
@@ -531,6 +538,64 @@ function getTargetResult(){
     // ctx.fillText('by shadow', 24, c.height - 8)
     let png = c.toDataURL('image/png');
     return png
+}
+
+function initDragAndDrop (dom, callback) {
+    dom.addEventListener('dragover', function (event) {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'copy'
+    })
+
+    dom.addEventListener('drop', function (event) {
+      event.preventDefault()
+
+      callback(event.dataTransfer.files[0])
+    })
+  }
+
+function openFile(){
+  let input=document.createElement('input')
+  input.type='file'
+  input.addEventListener('change',e=>{
+    const curFiles = input.files;
+    loadFile(curFiles[0]);
+  })
+  input.click()
+}
+
+function loadFile (file) {
+  const filename = file.name
+  const extension = filename
+    .split('.')
+    .pop()
+    .toLowerCase()
+
+  if (['gif','png','jpeg','jpg','jfif'].includes(extension)) {
+    // 'jpg', 'png'
+    const reader = new FileReader()
+    reader.addEventListener('load', function (event) {
+      // console.log(event,event.target.result)
+      updateTexture(event.target.result)
+    });
+    reader.readAsDataURL(file)
+  }
+}
+
+function updateTexture(url) {
+  if(!(window.cubes&&window.cubes.length>0)) return;
+  let t=new THREE.TextureLoader();
+  // 注意材质是异步的，需要在回调里render下
+  let texture=t.load(url,res=>{
+    // console.log(res,texture)
+      window.renderer.render( window.scene, window.camera );
+  });
+
+   for (const mesh of window.cubes) {
+        if (mesh.material.map) mesh.material.map.dispose()
+        mesh.material.map = texture
+        // texture.needsUpdate = true
+        mesh.material.needsUpdate = true // because the encoding can change
+      }
 }
 
 // login();

@@ -78,14 +78,16 @@
             margin-top: 12px;
         }
         .mini-button{
-            background: #4549f2;
-            color: white;
             height: 32px;
             border: none;
             margin:0 12px;
         }
-        .mini-button:hover {
+        .main-color:hover {
             color: orange;
+        }
+        .main-color{
+            background: #4549f2;
+            color: white;
         }
         .loading{
             position: fixed;
@@ -117,8 +119,8 @@
 
   <body>
     <header>
-        <button class="mini-button" id="login">LOGIN</button>
-        <button class="mini-button" id="open_github">GITHUB</button>
+        <button class="mini-button main-color" id="login">LOGIN</button>
+        <button class="mini-button main-color" id="open_github">GITHUB</button>
         <div class="loading" >LOADING</div>
     </header>
         <div class="container blur">
@@ -127,8 +129,15 @@
                 <div id="title">nft-minter</div>
                 <div id="app" class="">
                     <div style="display: flex;
-                    flex-direction: column;">
-                        <canvas id="target"></canvas>
+                    flex-direction: column;align-items: flex-start;">
+                        <div style="display: flex;">
+                            <canvas id="target"></canvas>
+                            <div class="buttons">
+                                <button id="input_map" class="mini-button">MAP</button>
+                              
+                            </div>
+                        </div>
+                       
                         <div class="buttons">
                             <button id="input_gif" class="select">GIF</button>
                             <button id="input_png">PNG</button>
@@ -140,14 +149,13 @@
                     justify-content: flex-start;
                     align-items: start;">
                         
-
                         <div class="form_element">
                             <div class="item-title">TITLE</div>
                             <div class="item-content" id="input_title">-</div>
                         </div>
                         <div class="form_element">
                             <div class="item-title">VERSION</div>
-                            <div class="item-content" id="input_version">1.2</div>
+                            <div class="item-content" id="input_version">1.3</div>
                         </div>
                         <div class="form_element">
                             <div class="item-title">DESCRIPTION</div>
