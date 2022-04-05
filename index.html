@@ -14,6 +14,7 @@
             text-align: center;
             background-color: #04001a;
             user-select: none;
+            font-family: ui-sans-serif;
         }
         header{
             display: flex;
@@ -78,14 +79,71 @@
             margin-top: 12px;
         }
         .mini-button{
-            background: #4549f2;
-            color: white;
             height: 32px;
             border: none;
             margin:0 12px;
         }
-        .mini-button:hover {
+        .button-icon{
+            display:flex;
+            margin:4px 0;
+            
+        }
+        .button-left{
+            margin: 0;
+            border: 0;
+            border-radius: 12px 0 0 12px;
+            padding: 0 8px;
+            font-size: 12px;
+            font-family:ui-sans-serif
+        }
+        .button-right{
+            width: 32px;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+            font-weight: 300;
+            border-radius: 0 12px 12px 0;
+            border: 0;
+        }
+        .button-left:hover{
+            box-shadow:inset 1px 0px 3px 0px rgb(177 177 177);
+        }
+        .button-right:hover{
+            box-shadow:inset 1px 0px 3px 0px rgb(177 177 177);
+        }
+        
+        .input-base{
+            display: flex;
+            margin:4px 0;
+            background-color: #efefef;
+            border-radius: 12px;
+            width: 240px;
+        }
+        .input-base div{
+            line-height: 44px;
+            /* margin: 0 18px; */
+            height: 44px;
+            padding: 0 8px;
+            font-size: 12px;
+            text-align:left;
+            font-weight: 800;
+            width: 50%;
+        }
+        .input-base input{
+            margin-right: 12px;
+            width: 100%;
+        }
+        .input-base input[type="number"]{
+            margin-top:8px;
+            margin-bottom:8px
+        }
+        
+        .main-color:hover {
             color: orange;
+        }
+        .main-color{
+            background: #4549f2;
+            color: white;
         }
         .loading{
             position: fixed;
@@ -112,13 +170,14 @@
             border: none;
             color: white;
         }
+
     </style>
   </head>
 
   <body>
     <header>
-        <button class="mini-button" id="login">LOGIN</button>
-        <button class="mini-button" id="open_github">GITHUB</button>
+        <button class="mini-button main-color" id="login">LOGIN</button>
+        <button class="mini-button main-color" id="open_github">GITHUB</button>
         <div class="loading" >LOADING</div>
     </header>
         <div class="container blur">
@@ -127,8 +186,35 @@
                 <div id="title">nft-minter</div>
                 <div id="app" class="">
                     <div style="display: flex;
-                    flex-direction: column;">
-                        <canvas id="target"></canvas>
+                    flex-direction: column;align-items: flex-start;">
+                        <div style="display: flex;">
+                            <canvas id="target"></canvas>
+                            <div class="buttons">
+                                <div class="button-icon">
+                                    <button id="input_random" class="button-left">RANDOM</button>
+                                    <button id="input_clear_random" class="button-right">X</button>
+                                </div>
+                                <div class="input-base">
+                                    <div>PADDING</div>
+                                    <input type="range" min="0.1" max="2" value="0.5" step="0.1"
+                                                   class="" id="input_padding">
+                                  </div>
+                                <div class="input-base">
+                                    <div>WIDTH</div>
+                                    <input type="number" id="input_width" value=100>
+                                </div>
+                                <div class="input-base">
+                                    <div>HEIGHT</div>
+                                    <input type="number" id="input_height" value=100>
+                                </div>
+                                <div class="button-icon">
+                                    <button id="input_map" class="button-left">MAP</button>
+                                    <button id="input_clear_map" class="button-right">X</button>
+                                </div>
+                               
+                            </div>
+                        </div>
+                       
                         <div class="buttons">
                             <button id="input_gif" class="select">GIF</button>
                             <button id="input_png">PNG</button>
@@ -140,14 +226,13 @@
                     justify-content: flex-start;
                     align-items: start;">
                         
-
                         <div class="form_element">
                             <div class="item-title">TITLE</div>
                             <div class="item-content" id="input_title">-</div>
                         </div>
                         <div class="form_element">
                             <div class="item-title">VERSION</div>
-                            <div class="item-content" id="input_version">1.2</div>
+                            <div class="item-content" id="input_version">1.4</div>
                         </div>
                         <div class="form_element">
                             <div class="item-title">DESCRIPTION</div>
