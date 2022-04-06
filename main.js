@@ -10,15 +10,11 @@ console.log(_isDev)
 
 const _TITLE = window.location.pathname.slice(1, -1).replace(/\/.*/ig, '') || "nft-minter";
 const _DES = window.location.hostname + window.location.pathname;
+const _MAX_SIZE = 50;
 
 window.cubes = [];
 window.animateIsFinish = true;
 window.createType = 'gif';
-
-var id = null;
-var fov = 45;
-var near = 0.1;
-var far = 1000;
 
 
 initApp();
@@ -94,10 +90,11 @@ function initApp() {
     document.querySelector("#open_github").onclick = () => window.location.href = 'https://github.com/shadowcz007/cubes-random-minter';
     document.querySelector("#app").style.display = "flex";
     document.querySelector("#submit_button").onclick = submit;
-    document.querySelector("#input_refresh").onclick = runAnimate;
-    document.querySelector("#target").onclick = () => document.querySelector("#input_refresh").click();
-    document.querySelector("#input_gif").onclick = () => changeCreateType("gif");
-    document.querySelector("#input_png").onclick = () => changeCreateType("png");
+    document.querySelector("#create").onclick = runAnimate;
+    document.querySelector('#download').onclick = download;
+    // document.querySelector("#target").onclick = () => document.querySelector("#create").click();
+    document.querySelector("#set_gif").onclick = () => changeCreateType("gif");
+    document.querySelector("#set_png").onclick = () => changeCreateType("png");
 
 
     // update cubes
@@ -141,27 +138,27 @@ function initApp() {
 function changeCreateType(t) {
     window.createType = t;
     if (t == 'gif') {
-        document.querySelector("#input_gif").classList.add("select");
-        document.querySelector("#input_png").classList.remove("select");
+        document.querySelector("#set_gif").classList.add("select");
+        document.querySelector("#set_png").classList.remove("select");
     } else {
-        document.querySelector("#input_gif").classList.remove("select");
-        document.querySelector("#input_png").classList.add("select");
+        document.querySelector("#set_gif").classList.remove("select");
+        document.querySelector("#set_png").classList.add("select");
     }
 }
 
 function disableCreateButtons() {
-    document.querySelector("#input_gif").setAttribute('disabled', true);
-    document.querySelector("#input_png").setAttribute('disabled', true);
-    document.querySelector("#input_refresh").setAttribute('disabled', true);
+    document.querySelector("#set_gif").setAttribute('disabled', true);
+    document.querySelector("#set_png").setAttribute('disabled', true);
+    document.querySelector("#create").setAttribute('disabled', true);
     document.querySelector("#submit_button").setAttribute('disabled', true);
     document.querySelector("#success_message").style.display = 'none';
 
 }
 
 function enableCreateButtons() {
-    document.querySelector("#input_gif").removeAttribute('disabled');
-    document.querySelector("#input_png").removeAttribute('disabled');
-    document.querySelector("#input_refresh").removeAttribute('disabled');
+    document.querySelector("#set_gif").removeAttribute('disabled');
+    document.querySelector("#set_png").removeAttribute('disabled');
+    document.querySelector("#create").removeAttribute('disabled');
     document.querySelector("#submit_button").removeAttribute('disabled');
 }
 
@@ -246,6 +243,26 @@ function createGif(ctxs = [], delay = 200) {
     // const url = URL.createObjectURL(new Blob([res],{type: 'image/gif'}));        //获取浏览器可用的地址
 
     return blobToBase64(new Blob([arr], { type: 'image/gif' }));
+}
+
+async function createBase64() {
+    let base64;
+    if (window.createType == 'gif' && window.ctxs && window.ctxs.length > 0) {
+        base64 = await createGif(window.ctxs, 1000 / window.fps);
+    }
+
+    if (window.createType == 'png') base64 = getTargetResult();
+    return base64;
+
+}
+
+async function download() {
+    let base64 = await createBase64();
+    let a = document.createElement('a')
+    a.href = encodeURI(base64)
+    a.setAttribute('name', _TITLE + '.' + window.createType)
+    a.setAttribute('download', _TITLE + '.' + window.createType)
+    a.click()
 }
 
 async function submit() {
@@ -426,10 +443,29 @@ function createGeometry() {
 
 }
 
+function getSceneCenter(scene) {
+    var minX = null,
+        maxX = null,
+        minY = null,
+        maxY = null;
+    for (let c of scene.children) {
+        if (minX == null) {
+            minX = c.position.x
+            maxX = c.position.x
+            minY = c.position.y;
+            maxY = c.position.y;
+        };
+        minX = Math.min(minX, c.position.x);
+        maxX = Math.max(maxX, c.position.x);
+        minY = Math.min(minY, c.position.y);
+        maxY = Math.max(maxY, c.position.y);
+    };
+    return [(minX + maxX) / 2, (minY + maxY) / 2]
+}
+
 function create() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, near, far);
 
     let canvas = document.querySelector('#target'),
         width = parseInt(getComputedStyle(document.querySelector('#target')).width),
@@ -446,6 +482,13 @@ function create() {
     // canvas.width=width;
     // canvas.height=height;
     // canvas.width=
+
+    var fov = 45;
+    var near = 0.1;
+    var far = 1000;
+
+    const camera = new THREE.PerspectiveCamera(fov, width / height, near, far);
+
     const renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
@@ -491,9 +534,18 @@ function create() {
     // light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
     scene.add(light4);
 
-    scene.add(new THREE.AmbientLight(0xffffff, Math.random() + 0.2));
+    scene.add(new THREE.AmbientLight(0xffffff, Math.random() + 1.2));
 
-    camera.position.z = 5;
+    camera.position.z = 100;
+
+    // 官方实现的
+    // Orbit controls allow the camera to orbit around a target.
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(...getSceneCenter(scene), 0);
+    controls.update();
+    controls.enablePan = true;
+    controls.enableDamping = true;
+
 
     function onPointerMove(event) {
         if (event.isPrimary === false) return;
@@ -510,28 +562,6 @@ function create() {
         // console.log(mouseX,mouseY)
     }
 
-    function onMousewheel(event) {
-        event.preventDefault();
-        // console.log(event)
-        if (event.wheelDelta) { //判断浏览器IE，谷歌滑轮事件  
-            if (event.wheelDelta > 0) { //当滑轮向上滚动时  
-                fov -= (near < fov ? 1 : 0);
-            }
-            if (event.wheelDelta < 0) { //当滑轮向下滚动时  
-                fov += (fov < far ? 1 : 0);
-            }
-        } else if (event.detail) { //Firefox滑轮事件  
-            if (event.detail > 0) { //当滑轮向上滚动时  
-                fov -= 1;
-            }
-            if (event.detail < 0) { //当滑轮向下滚动时  
-                fov += 1;
-            }
-        }
-        window.camera.fov = fov;
-        window.camera.updateProjectionMatrix();
-        renderer.render(window.scene, window.camera);
-    }
 
     function onWindowResize() {
         windowHalfX = width / 2 + canvas.offsetLeft;
@@ -542,6 +572,7 @@ function create() {
     }
 
     function render() {
+        controls.update();
         // console.log('animate')
         if (!window.animateIsFinish) {
 
@@ -602,7 +633,7 @@ function create() {
 
     document.body.style.touchAction = 'none';
     document.body.addEventListener('pointermove', onPointerMove);
-    document.querySelector('#target').addEventListener('mousewheel', onMousewheel, false);
+    // document.querySelector('#target').addEventListener('mousewheel', onMousewheel, false);
     window.addEventListener('resize', onWindowResize);
 
     animate();
@@ -679,51 +710,44 @@ function loadFile(file) {
 }
 
 // gridSize 马赛克大小
-function splitImage(url, gridSize = 10) {
+function splitImage(img, gridSize = 10) {
     let canvas = document.createElement('canvas'),
         ctx = canvas.getContext('2d');
 
-    let img = new Image();
-    img.src = url;
-    return new Promise((resolve, _) => {
-        img.onload = () => {
+    let width = img.naturalWidth,
+        height = img.naturalHeight;
 
-            let width = img.naturalWidth,
-                height = img.naturalHeight;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
 
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
+    let gw = parseInt(width / gridSize),
+        gh = parseInt(height / gridSize);
+    let gwStart = (width - gw * gridSize) / 2;
+    let ghStart = (height - gh * gridSize) / 2;
 
-            let gw = parseInt(width / gridSize),
-                gh = parseInt(height / gridSize);
-            let gwStart = (width - gw * gridSize) / 2;
-            let ghStart = (height - gh * gridSize) / 2;
-
-            let res = [];
-            for (let x = 0; x < gw; x++) {
-                let xStart = gwStart + x * gridSize;
-                let xEnd = xStart + gridSize;
-                let ws = [];
-                for (let y = 0; y < gh; y++) {
-                    let yStart = ghStart + y * gridSize;
-                    let yEnd = yStart + gridSize;
-                    // console.log(xStart,xEnd,yStart,yEnd)
-                    let imgData = ctx.getImageData(xStart, yStart, gridSize, gridSize);
-                    ws.push({
-                        imgData,
-                        x: xStart,
-                        width: gridSize,
-                        y: yStart,
-                        height: gridSize
-                    })
-                };
-                res.push(ws);
-            };
-            resolve({ data: res, width: gw, height: gh });
+    let res = [];
+    for (let x = 0; x < gw; x++) {
+        let xStart = gwStart + x * gridSize;
+        let xEnd = xStart + gridSize;
+        let ws = [];
+        for (let y = 0; y < gh; y++) {
+            let yStart = ghStart + y * gridSize;
+            let yEnd = yStart + gridSize;
+            // console.log(xStart,xEnd,yStart,yEnd)
+            let imgData = ctx.getImageData(xStart, yStart, gridSize, gridSize);
+            ws.push({
+                imgData,
+                x: xStart,
+                width: gridSize,
+                y: yStart,
+                height: gridSize
+            })
         };
+        res.push(ws);
+    };
 
-    })
+    return { data: res, width: gw, height: gh };
 
 };
 
@@ -735,63 +759,76 @@ function loadTexture(url) {
             resolve(texture)
         });
     })
+};
+
+function createImageFromUrl(url) {
+    return new Promise((resolve, _) => {
+        let img = new Image();
+        img.src = url;
+        img.onload = () => {
+            resolve(img);
+        }
+    });
 }
 
 function updateTexture(url) {
     if (!(window.cubes && window.cubes.length > 0)) return;
 
-    splitImage(url, 20).then(async si => {
-        let data = si.data,
-            width = si.width,
+    createImageFromUrl(url).then(async im => {
+
+        let si = splitImage(im, _MAX_SIZE);
+        let width = si.width,
             height = si.height;
+        window.map_data = si.data;
         window.input_width = width;
         window.input_height = height;
         document.querySelector('#input_width').value = window.input_width;
         document.querySelector('#input_height').value = window.input_height;
+        await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data)
 
-        updateCubesImage(width, height, window.input_padding)
+    });
+}
 
+async function updateCubesImageAndTextures(width, height, data) {
+
+    updateCubesImage(width, height, window.input_padding);
+    if (data) {
+        // 批量处理纹理
+        let textures = [];
+        let count = width * height;
         for (let index = 0; index < data.length; index++) {
             for (let i = 0; i < data[index].length; i++) {
-                // console.log( window.cubes[index][i]);
+
                 let c = document.createElement('canvas'),
                     ctx = c.getContext('2d');
                 c.width = data[index][i].width;
                 c.height = data[index][i].height;
                 // console.log(data[index][i].imgData)
                 ctx.putImageData(data[index][i].imgData, 0, 0);
-                // document.body.appendChild(c);
-                let texture = await loadTexture(c.toDataURL());
-                updateMeshTexture(window.cubes[index][i], texture);
-                // window.renderer.render( window.scene, window.camera );
 
+                if (!textures[index]) textures[index] = []
+                textures[index][i] = await loadTexture(c.toDataURL());
+                count--;
+                document.querySelector('#input_map').innerText = (100 * (width * height - count) / (width * height)).toFixed(1) + '%'
             }
         };
-        window.renderer.render(window.scene, window.camera);
-
-    })
-
-    // loadTexture(url).then(texture=>{
-
-    //   for (const row of window.cubes) {
-    //    for (const mesh of row) {
-    //      if (mesh.material.map) mesh.material.map.dispose()
-    //       mesh.material.map = texture
-    //       // texture.needsUpdate = true
-    //       mesh.material.needsUpdate = true 
-    //     }
-    //   }
-
-    //   window.renderer.render( window.scene, window.camera );
-
-    // })
-
-    function updateMeshTexture(mesh, texture) {
-        if (mesh.material.map) mesh.material.map.dispose();
-        mesh.material.map = texture;
-        mesh.material.needsUpdate = true; // because the encoding can change
+        // 统一更新
+        for (let index = 0; index < textures.length; index++) {
+            for (let i = 0; i < textures[index].length; i++) {
+                let texture = textures[index][i];
+                updateMeshTexture(window.cubes[index][i], texture);
+            }
+        };
     }
 
+    window.renderer.render(window.scene, window.camera);
+
+}
+
+function updateMeshTexture(mesh, texture) {
+    if (mesh.material.map) mesh.material.map.dispose();
+    mesh.material.map = texture;
+    mesh.material.needsUpdate = true; // because the encoding can change
 }
 
 function updatePadding(e) {
@@ -800,16 +837,18 @@ function updatePadding(e) {
     updateCubesPosition(window.input_padding)
 }
 
-function updateWidth(e) {
+async function updateWidth(e) {
     window.input_width = parseInt(e.target.value);
-    console.log(window.input_width, window.input_height, window.input_padding)
-    updateCubesImage(window.input_width, window.input_height, window.input_padding)
+    // console.log(window.input_width, window.input_height, window.input_padding)
+    await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data);
+    // updateCubesImage(window.input_width, window.input_height, window.input_padding)
 }
 
-function updateHeight(e) {
+async function updateHeight(e) {
     window.input_height = parseInt(e.target.value);
-    console.log(window.input_width, window.input_height, window.input_padding)
-    updateCubesImage(window.input_width, window.input_height, window.input_padding)
+    await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data);
+    // console.log(window.input_width, window.input_height, window.input_padding)
+    // updateCubesImage(window.input_width, window.input_height, window.input_padding)
 }
 
 // login();
