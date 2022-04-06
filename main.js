@@ -15,7 +15,7 @@ const _MAX_SIZE = 50;
 window.cubes = [];
 window.animateIsFinish = true;
 window.createType = 'gif';
-
+window.input_speed = 0.01;
 
 initApp();
 checkUserStatus();
@@ -99,9 +99,11 @@ function initApp() {
 
     // update cubes
     document.querySelector('#input_map').onclick = openFile;
+    document.querySelector('#input_clear_map').onclick = clearMap;
     document.querySelector('#input_padding').onchange = updatePadding;
     document.querySelector('#input_width').onchange = updateWidth;
     document.querySelector('#input_height').onchange = updateHeight;
+    document.querySelector('#input_speed').onchange = updateSpeed;
 
     window.input_width = parseInt(document.querySelector('#input_width').value);
     window.input_height = parseInt(document.querySelector('#input_height').value);
@@ -515,28 +517,28 @@ function create() {
     // window.material.map = new THREE.CanvasTexture( window.drawingCanvas );
     // // cube2.position.x=-0
     // scene.add( cube2 );
-
+    let distance = 100;
     //lights
     // const sphere = new THREE.SphereGeometry( 0.5, 16, 8 );
-    light1 = new THREE.PointLight(0xff0040, 2, 50);
+    light1 = new THREE.PointLight(0xff0040, 2, distance);
     // light1.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0040 } ) ) );
     scene.add(light1);
 
-    light2 = new THREE.PointLight(0x0040ff, 2, 50);
+    light2 = new THREE.PointLight(0x0040ff, 2, distance);
     // light2.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0040ff } ) ) );
     scene.add(light2);
 
-    light3 = new THREE.PointLight(0x80ff80, 2, 50);
+    light3 = new THREE.PointLight(0x80ff80, 2, distance);
     // light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x80ff80 } ) ) );
     scene.add(light3);
 
-    light4 = new THREE.PointLight(0xffaa00, 2, 50);
+    light4 = new THREE.PointLight(0xffaa00, 2, distance);
     // light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
     scene.add(light4);
 
-    scene.add(new THREE.AmbientLight(0xffffff, Math.random() + 1.2));
+    scene.add(new THREE.AmbientLight(0xffffff, Math.random() + 0.8));
 
-    camera.position.z = 100;
+    camera.position.z = -100;
 
     // 官方实现的
     // Orbit controls allow the camera to orbit around a target.
@@ -545,6 +547,7 @@ function create() {
     controls.update();
     controls.enablePan = true;
     controls.enableDamping = true;
+    // controls.listenToKeyEvents( renderer.domElement) 
 
 
     function onPointerMove(event) {
@@ -579,8 +582,8 @@ function create() {
             let count = 30;
             for (const row of window.cubes) {
                 for (const cube of row) {
-                    cube.rotation.x += 0.01 * Math.random();
-                    cube.rotation.y += 0.01 * Math.random();
+                    cube.rotation.x += window.input_speed * Math.random();
+                    cube.rotation.y += window.input_speed * Math.random();
                     // cube.position.z = Math.random()>0.5?-0.3:0;
                     if (count > 0) {
                         //cube.scale.x += Math.random()*(Math.random()>0.5?-0.02:0.02);
@@ -685,8 +688,19 @@ function openFile() {
     input.addEventListener('change', e => {
         const curFiles = input.files;
         loadFile(curFiles[0]);
+        document.querySelector('#input_width').setAttribute('disabled', true);
+        document.querySelector('#input_height').setAttribute('disabled', true);
     })
     input.click()
+}
+
+function clearMap() {
+    document.querySelector('#input_map').innerText = 'MAP';
+    document.querySelector('#input_width').removeAttribute('disabled');
+    document.querySelector('#input_height').removeAttribute('disabled');
+    window.mapImage = null;
+    window.map_data = null;
+    updateTexture(window.mapImage);
 }
 
 function loadFile(file) {
@@ -702,7 +716,7 @@ function loadFile(file) {
         reader.addEventListener('load', function(event) {
             // console.log(event,event.target.result)
             window.mapImage = event.target.result
-            updateTexture(event.target.result)
+            updateTexture(window.mapImage)
 
         });
         reader.readAsDataURL(file)
@@ -773,20 +787,24 @@ function createImageFromUrl(url) {
 
 function updateTexture(url) {
     if (!(window.cubes && window.cubes.length > 0)) return;
+    if (!url) {
+        updateCubesImage(window.input_width, window.input_height, window.input_padding);
+    } else {
+        createImageFromUrl(url).then(async im => {
 
-    createImageFromUrl(url).then(async im => {
+            let si = splitImage(im, _MAX_SIZE);
+            let width = si.width,
+                height = si.height;
+            window.map_data = si.data;
+            window.input_width = width;
+            window.input_height = height;
+            document.querySelector('#input_width').value = window.input_width;
+            document.querySelector('#input_height').value = window.input_height;
+            await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data)
 
-        let si = splitImage(im, _MAX_SIZE);
-        let width = si.width,
-            height = si.height;
-        window.map_data = si.data;
-        window.input_width = width;
-        window.input_height = height;
-        document.querySelector('#input_width').value = window.input_width;
-        document.querySelector('#input_height').value = window.input_height;
-        await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data)
+        });
+    }
 
-    });
 }
 
 async function updateCubesImageAndTextures(width, height, data) {
@@ -849,6 +867,10 @@ async function updateHeight(e) {
     await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data);
     // console.log(window.input_width, window.input_height, window.input_padding)
     // updateCubesImage(window.input_width, window.input_height, window.input_padding)
+}
+
+function updateSpeed(e) {
+    window.input_speed = parseFloat(e.target.value);
 }
 
 // login();
