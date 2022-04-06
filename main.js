@@ -100,14 +100,18 @@ function initApp() {
     // update cubes
     document.querySelector('#input_map').onclick = openFile;
     document.querySelector('#input_clear_map').onclick = clearMap;
-    document.querySelector('#input_padding').onchange = updatePadding;
-    document.querySelector('#input_width').onchange = updateWidth;
-    document.querySelector('#input_height').onchange = updateHeight;
-    document.querySelector('#input_speed').onchange = updateSpeed;
+    document.querySelector('#input_padding').oninput = updatePadding;
+    document.querySelector('#input_width').oninput = updateWidth;
+    document.querySelector('#input_height').oninput = updateHeight;
+    document.querySelector('#input_speed').oninput = updateSpeed;
+    document.querySelector('#enable_rotation').oninput=updateRotation;
+    document.querySelector('#input_intensity').oninput=updateIntensity;
 
     window.input_width = parseInt(document.querySelector('#input_width').value);
     window.input_height = parseInt(document.querySelector('#input_height').value);
     window.input_padding = parseFloat(document.querySelector('#input_padding').value);
+    window.enable_rotation = !!document.querySelector('#enable_rotation').checked;
+    window.input_intensity= Math.random() + 0.8;
 
     initDragAndDrop(document, loadFile);
 
@@ -153,6 +157,7 @@ function disableCreateButtons() {
     document.querySelector("#set_png").setAttribute('disabled', true);
     document.querySelector("#create").setAttribute('disabled', true);
     document.querySelector("#submit_button").setAttribute('disabled', true);
+    document.querySelector("#download").setAttribute('disabled', true);
     document.querySelector("#success_message").style.display = 'none';
 
 }
@@ -162,6 +167,7 @@ function enableCreateButtons() {
     document.querySelector("#set_png").removeAttribute('disabled');
     document.querySelector("#create").removeAttribute('disabled');
     document.querySelector("#submit_button").removeAttribute('disabled');
+    document.querySelector("#download").removeAttribute('disabled');
 }
 
 
@@ -536,7 +542,8 @@ function create() {
     // light4.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffaa00 } ) ) );
     scene.add(light4);
 
-    scene.add(new THREE.AmbientLight(0xffffff, Math.random() + 0.8));
+    light5=new THREE.AmbientLight(0xffffff,window.input_intensity);
+    scene.add(light5);
 
     camera.position.z = -100;
 
@@ -580,21 +587,24 @@ function create() {
         if (!window.animateIsFinish) {
 
             let count = 30;
-            for (const row of window.cubes) {
-                for (const cube of row) {
-                    cube.rotation.x += window.input_speed * Math.random();
-                    cube.rotation.y += window.input_speed * Math.random();
-                    // cube.position.z = Math.random()>0.5?-0.3:0;
-                    if (count > 0) {
-                        //cube.scale.x += Math.random()*(Math.random()>0.5?-0.02:0.02);
-                        // Spherify
-                        cube.morphTargetInfluences[0] = window.spherify
-                            // Twist
-                        cube.morphTargetInfluences[1] = window.twist;
-                        count--;
-                    };
+            if(window.enable_rotation){
+                for (const row of window.cubes) {
+                    for (const cube of row) {
+                        cube.rotation.x += window.input_speed * Math.random();
+                        cube.rotation.y += window.input_speed * Math.random();
+                        // cube.position.z = Math.random()>0.5?-0.3:0;
+                        if (count > 0) {
+                            //cube.scale.x += Math.random()*(Math.random()>0.5?-0.02:0.02);
+                            // Spherify
+                            cube.morphTargetInfluences[0] = window.spherify
+                                // Twist
+                            cube.morphTargetInfluences[1] = window.twist;
+                            count--;
+                        };
+                    }
                 }
             }
+            
             const time = Date.now() * 0.0035;
 
             light1.position.x = Math.sin(time * 0.7) * 30;
@@ -791,8 +801,10 @@ function updateTexture(url) {
         updateCubesImage(window.input_width, window.input_height, window.input_padding);
     } else {
         createImageFromUrl(url).then(async im => {
+            
+            // if(Math.max(im.naturalHeight,im.naturalWidth)){}
 
-            let si = splitImage(im, _MAX_SIZE);
+            let si = splitImage(im, Math.max(im.naturalHeight,im.naturalWidth)/Math.max(Math.max(im.naturalHeight,im.naturalWidth)/10,_MAX_SIZE));
             let width = si.width,
                 height = si.height;
             window.map_data = si.data;
@@ -871,6 +883,20 @@ async function updateHeight(e) {
 
 function updateSpeed(e) {
     window.input_speed = parseFloat(e.target.value);
+}
+
+function updateRotation(e){
+    window.enable_rotation=!!e.target.checked;
+    if(window.enable_rotation){
+        document.querySelector('#input_speed').removeAttribute('disabled');
+    }else{
+        document.querySelector('#input_speed').setAttribute('disabled',true);
+    }
+}
+
+function updateIntensity(e){
+    window.input_intensity=parseFloat(e.target.value);
+    light5.intensity=window.input_intensity;
 }
 
 // login();
