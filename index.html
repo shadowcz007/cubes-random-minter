@@ -8,8 +8,9 @@
     <!-- <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script> -->
     <script src="https://unpkg.com/three@0.139.0/build/three.js"></script>
     <script src="https://unpkg.com/three@0.139.0/examples/js/controls/OrbitControls.js"></script>
-
+    <script src="https://unpkg.com/animejs@3.2.1/lib/anime.min.js"></script>
     <script src='https://unpkg.com/mini-gif@1.0.0/dist/mini-gif.umd.js'></script>
+    <!-- <script src="https://unpkg.com/ccapture.js@1.1.0/build/CCapture.all.min.js"></script> -->
     <style>
         body {
             text-align: center;
@@ -90,28 +91,55 @@
             margin-top: 12px;
             margin-left: 8px;
         }
-        
+        .buttons-column{
+            display: flex;
+            flex-direction: column;
+        }
+        .button-image{
+            height: 88px !important;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+        }
         .mini-button {
             height: 32px;
             border: none;
             margin: 0 12px;
         }
+
+        .button-small{
+            border-radius: 12px;
+            height: 28px;
+            margin: 0;
+            border: 0;
+            padding: 0 8px;
+            font-size: 12px;
+            font-family: ui-sans-serif;
+            box-shadow: 1px 0px 4px 0px #3f51b5;
+        }
         
         .button-icon {
             display: flex;
+            align-items: center;
             margin: 4px 0;
+            width: 100%!important;
         }
         
         .button-left {
+            height: 28px;
             margin: 0;
             border: 0;
             border-radius: 12px 0 0 12px;
             padding: 0 8px;
             font-size: 12px;
-            font-family: ui-sans-serif
+            font-family: ui-sans-serif;
+            box-shadow: 1px 0px 4px 0px #3f51b5;
         }
         
         .button-right {
+            height: 28px;
             width: 32px;
             padding: 0;
             margin: 0;
@@ -119,26 +147,22 @@
             font-weight: 300;
             border-radius: 0 12px 12px 0;
             border: 0;
+            box-shadow: 3px 0px 3px 0px #3f51b5;
         }
-        
-        .button-left:hover {
+        .button-hover:hover{
             box-shadow: inset 1px 0px 3px 0px rgb(177 177 177);
         }
-        
-        .button-right:hover {
-            box-shadow: inset 1px 0px 3px 0px rgb(177 177 177);
-        }
-        
+       
         .input-base {
             display: flex;
             margin: 4px 0;
             background-color: #efefef;
             border-radius: 12px;
-            width: 240px;
+            width: 220px;
             align-items: center;
         }
         
-        .input-base div {
+        .input-base .title {
             line-height: 44px;
             /* margin: 0 18px; */
             height: 44px;
@@ -146,7 +170,7 @@
             font-size: 12px;
             text-align: left;
             font-weight: 800;
-            width: 50%;
+            /* width: 50%; */
         }
         
         .input-base input {
@@ -158,6 +182,15 @@
             margin-top: 8px;
             margin-bottom: 8px
         }
+      
+        .input-base img{
+            width: 56px;
+            height: 56px;
+            background-color: gray;
+            margin: 2px;
+            cursor: pointer;
+        }
+
         
         .main-color:hover {
             color: orange;
@@ -192,8 +225,28 @@
         
         .select {
             background-color: #00bcd4;
+            outline: 2px solid #00bcd4;
             border: none;
             color: white;
+        }
+        #result{
+            display: block;
+            width: 288px;
+            height: 440px;
+            background-color: #eee;
+            padding: 8px;
+            overflow-y: scroll;
+            
+        }
+
+        #result img{
+            width: 88px;
+            height: auto;
+            margin:1px;
+        }
+        #result img:hover{
+            cursor: pointer;
+            outline: 2px solid #00bcd4;
         }
     </style>
 </head>
@@ -201,7 +254,7 @@
 <body>
     <header>
         <button class="mini-button main-color" id="login">LOGIN</button>
-        <button class="mini-button main-color" id="open_github">GITHUB</button>
+        <button class="mini-button main-color" id="about">ABOUT</button>
         <div class="loading">LOADING</div>
     </header>
     <div class="container blur">
@@ -216,39 +269,58 @@
                         <div class="buttons">
 
                             <div class="input-base">
-                                <div>PADDING</div>
+                                <div class="title">PADDING</div>
                                 <input type="range" min="0.01" max="2" value="0.5" step="0.05" class="" id="input_padding">
                             </div>
                             <div class="input-base">
-                                <div>WIDTH</div>
+                                <div class="title">WIDTH</div>
                                 <input type="range" min="1" max="50" value="20" step="1" class="" id="input_width">
                                 <!-- <input type="number" id="input_width" value=100> -->
                             </div>
                             <div class="input-base">
-                                <div>HEIGHT</div>
+                                <div class="title">HEIGHT</div>
                                 <input type="range" min="1" max="50" value="20" step="1"   id="input_height">
                                 <!-- <input type="number" id="input_height" value=100> -->
                             </div>
                             
                             <div class="input-base">
-                                <div>ROTATION</div>
+                                <div class="title">ROTATION</div>
                                 <input type="checkbox" id="enable_rotation" checked>
                                 <!-- <input type="number" id="input_height" value=100> -->
                             </div>
                             <div class="input-base">
-                                <div>SPEED</div>
-                                <input type="range" min="0.001" max="0.1" value="0.01" step="0.001"  id="input_speed">
+                                <div class="title">ZINDEX</div>
+                                <input type="checkbox" id="enable_zindex" checked>
+                                <!-- <input type="number" id="input_height" value=100> -->
+                            </div>
+                            <div class="input-base">
+                                <div class="title">SPEED</div>
+                                <input type="range" min="0.001" max="0.2" value="0.01" step="0.002"  id="input_speed">
                                 <!-- <input type="number" id="input_height" value=100> -->
                             </div>
                             
-                            <div class="button-icon">
-                                <button id="input_map" class="button-left">MAP</button>
-                                <button id="input_clear_map" class="button-right">X</button>
+                            <div class="input-base">
+                                <div class="title">MAP</div>
+                                <div class="button-image">
+                                    <img src="images/1.png" id="next_img_display">
+                                    <div class="buttons-column">
+                                        <button id="input_next" class="button-small button-hover">NEXT</button>
+                                        <div class="button-icon">
+                                            <button id="input_map" class="button-left button-hover">OPEN</button>
+                                            <button id="input_clear_map" class="button-right button-hover">X</button>
+                                        </div>
+                                    </div>
+                                   
+                                </div>
+
+                                
+                               
                             </div>
                             <div class="input-base">
-                                <div>INTENSITY</div>
+                                <div class="title">BRIGHTNESS</div>
                                 <input type="range" min="0.1" max="2" value="0.1" step="0.05"  id="input_intensity">
                             </div>
+ 
                             
                             <!-- <div class="button-icon">
                                 <button id="input_random" class="button-left">RANDOM</button>
@@ -265,37 +337,68 @@
                         <button id="download">DOWNLOAD</button>
                     </div>
                 </div>
+
+                <div style="display: none;
+                position: absolute;
+                top: 44px;
+                right: 20px;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: start;
+                max-width: 300px;
+                text-align: left;
+                background: #eeeeee;
+                box-shadow: 0px 9px 8px 2px #434860;
+                border-radius: 12px;
+                padding: 24px;">
+
+                <div class="form_element">
+                    <div class="item-title">TITLE</div>
+                    <div class="item-content" id="input_title">-</div>
+                </div>
+                <div class="form_element">
+                    <div class="item-title">VERSION</div>
+                    <div class="item-content" id="input_version">1.6</div>
+                </div>
+                <div class="form_element">
+                    <div class="item-title">DESCRIPTION</div>
+                    <div class="item-content" id="input_description">-</div>
+                </div>
+
+                <div class="form_element">
+                    <div class="item-title">DEVICE ID</div>
+                    <div class="item-content" id="input_id">-</div>
+                </div>
+
+                <div class="form_element">
+                    <div class="item-title">TIMESTAMP</div>
+                    <div class="item-content" id="input_timestamp">-</div>
+                </div>
+                <div class="form_element">
+                    <button class="mini-button main-color" id="open_github">GITHUB</button>
+                </div>
+                
+            </div>
+
                 <div style="display: flex;
                     flex-direction: column;
                     justify-content: flex-start;
-                    align-items: start;max-width: 240px;
+                    align-items: start;max-width: 300px;
                     text-align: left;">
-
-                    <div class="form_element">
-                        <div class="item-title">TITLE</div>
-                        <div class="item-content" id="input_title">-</div>
+                    <div class="form_element" id="result">
+                        
                     </div>
-                    <div class="form_element">
-                        <div class="item-title">VERSION</div>
-                        <div class="item-content" id="input_version">1.6</div>
-                    </div>
-                    <div class="form_element">
-                        <div class="item-title">DESCRIPTION</div>
-                        <div class="item-content" id="input_description">-</div>
-                    </div>
-
-                    <div class="form_element">
-                        <div class="item-title">DEVICE ID</div>
-                        <div class="item-content" id="input_id">-</div>
-                    </div>
-
-                    <div class="form_element">
-                        <div class="item-title">TIMESTAMP</div>
-                        <div class="item-content" id="input_timestamp">-</div>
-                    </div>
-
-                    <div class="form_element">
+                    
+                    <div class="form_element" style="flex-direction: row;
+                    width: 100%;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
                         <button class="btn btn-primary btn-lg btn-block" id="submit_button" disabled>MINT</button>
+                        <div>
+                            <div class="item-title">TIMESTAMP</div>
+                            <div class="item-content" id="display_timestamp">-</div>
+                        </div>
                     </div>
                     <div id="success_message">
 

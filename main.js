@@ -10,12 +10,15 @@ console.log(_isDev)
 
 const _TITLE = window.location.pathname.slice(1, -1).replace(/\/.*/ig, '') || "nft-minter";
 const _DES = window.location.hostname + window.location.pathname;
-const _MAX_SIZE = 50;
+const _MAX_SIZE = 30;
 
 window.cubes = [];
 window.animateIsFinish = true;
 window.createType = 'gif';
 window.input_speed = 0.01;
+window.nextMapIndex=1;
+window.nextMapMaxIndex=2;
+
 
 initApp();
 checkUserStatus();
@@ -100,17 +103,20 @@ function initApp() {
     // update cubes
     document.querySelector('#input_map').onclick = openFile;
     document.querySelector('#input_clear_map').onclick = clearMap;
+    document.querySelector('#input_next').onclick=nextMap;
     document.querySelector('#input_padding').oninput = updatePadding;
     document.querySelector('#input_width').oninput = updateWidth;
     document.querySelector('#input_height').oninput = updateHeight;
     document.querySelector('#input_speed').oninput = updateSpeed;
     document.querySelector('#enable_rotation').oninput=updateRotation;
+    document.querySelector('#enable_zindex').oninput=updateZindex;
     document.querySelector('#input_intensity').oninput=updateIntensity;
 
     window.input_width = parseInt(document.querySelector('#input_width').value);
     window.input_height = parseInt(document.querySelector('#input_height').value);
     window.input_padding = parseFloat(document.querySelector('#input_padding').value);
     window.enable_rotation = !!document.querySelector('#enable_rotation').checked;
+    window.enable_zindex = !!document.querySelector('#enable_zindex').checked;
     window.input_intensity= Math.random() + 0.8;
 
     initDragAndDrop(document, loadFile);
@@ -141,6 +147,16 @@ function initApp() {
 
 };
 
+function nextMap(){
+    clearMap();
+    // if(!window.nextMapIndex) window.nextMapIndex=1;
+    window.nextMapIndex++;
+    if(window.nextMapIndex>window.nextMapMaxIndex) window.nextMapIndex=1;
+    window.mapImage=`images/${window.nextMapIndex}.png`;
+    document.querySelector('#next_img_display').src=window.mapImage;
+    updateTexture(window.mapImage);
+}
+
 function changeCreateType(t) {
     window.createType = t;
     if (t == 'gif') {
@@ -156,7 +172,7 @@ function disableCreateButtons() {
     document.querySelector("#set_gif").setAttribute('disabled', true);
     document.querySelector("#set_png").setAttribute('disabled', true);
     document.querySelector("#create").setAttribute('disabled', true);
-    document.querySelector("#submit_button").setAttribute('disabled', true);
+    // document.querySelector("#submit_button").setAttribute('disabled', true);
     document.querySelector("#download").setAttribute('disabled', true);
     document.querySelector("#success_message").style.display = 'none';
 
@@ -166,8 +182,50 @@ function enableCreateButtons() {
     document.querySelector("#set_gif").removeAttribute('disabled');
     document.querySelector("#set_png").removeAttribute('disabled');
     document.querySelector("#create").removeAttribute('disabled');
-    document.querySelector("#submit_button").removeAttribute('disabled');
+    // document.querySelector("#submit_button").removeAttribute('disabled');
     document.querySelector("#download").removeAttribute('disabled');
+};
+
+
+function computeAnimate(from,to,duration=1500){
+    // https://animejs.com/documentation/#JSobjProp
+    let res=[];
+    return new Promise((resolve,_)=>{
+        anime({
+            targets: from,
+            ...to,
+            easing: 'linear',
+            round: 1,
+            duration: duration,
+            update: function() {
+                // console.log(JSON.stringify(myObject2))
+              res.push({...from})
+            },
+           complete:function(){
+               resolve(res);
+            }
+          });
+      })  
+};
+
+function seekAnimate(from,to,seek=0.1,duration=2500){
+    let f={...from};
+    let animation=anime({
+        targets: f,
+        ...to,
+        easing: 'linear',
+        round: 1,
+        duration: duration,
+    //     update: function() {
+    //         // console.log(JSON.stringify(myObject2))
+    //       res.push({...from})
+    //     },
+    //    complete:function(){
+          
+    //     }
+      });
+    animation.seek(animation.duration * seek);
+    return f;
 }
 
 
@@ -175,20 +233,27 @@ function runAnimate() {
 
     disableCreateButtons();
     window.animateTime = window.createType === 'gif' ? 1500 : 3500 + (3000 * Math.random());
-    window.animateIsFinish ? window.animateIsFinish = false : null;
-    window.spherify = Math.random() * 1.2;
-    window.twist = Math.random() * 1.2;
+    // window.animateIsFinish ? window.animateIsFinish = false : null;
+    window.spherify = Math.random()>0.5?-1:1;
+    window.twist = Math.random()>0.5?-1 :1;
     window.cubes = shuffle(window.cubes);
 
     if (window.createType === 'gif') {
-        createGifFromAnimate(window.animateTime || 1000).then(() => enableCreateButtons())
-    };
+        // window.ctxs = [];
+        // window.fps = 12;
+        createGifFromAnimate(window.animateTime || 1000).then(async() => {
+            await createBase64ForResult()
+            enableCreateButtons();
+        })
+    }else{
+        createBase64ForResult().then(()=>enableCreateButtons());
+    }
 
     // 动画终止
-    setTimeout(() => {
-        window.animateIsFinish = true;
-        if (window.createType === 'png') enableCreateButtons();
-    }, window.animateTime || 1000);
+    // setTimeout(() => {
+    //     window.animateIsFinish = true;
+    //     if (window.createType === 'png') enableCreateButtons();
+    // }, window.animateTime || 1000);
 
 
     // 打乱
@@ -206,9 +271,20 @@ function runAnimate() {
 async function createGifFromAnimate(t = 2000, fps = 12) {
     window.ctxs = [];
     window.fps = fps;
-    for (var i = 0; i < (t / 1000) * fps; i++) {
-        await sleep(1000 / fps)
-        let ctx = await canvasClone2Ctx(renderer.domElement);
+    
+    for (var i = 0; i <= (t / 1000) * fps; i++) {
+        await sleep(1000 / fps);
+        // console.log(i,(t / 1000) * fps,i/((t / 1000) * fps))
+        runAnimateInRender(i/((t / 1000) * fps))
+        renderer.render(scene, camera);
+        let ctx = canvasClone2Ctx(renderer.domElement);
+        window.ctxs.push(ctx);
+    };
+    for (var i = 0; i <= fps/2; i++) {
+        await sleep(1000 / fps);
+        runAnimateInRender(1);
+        renderer.render(scene, camera);
+        let ctx = canvasClone2Ctx(renderer.domElement);
         window.ctxs.push(ctx);
     };
 }
@@ -264,6 +340,23 @@ async function createBase64() {
 
 }
 
+async function createBase64ForResult(){
+    let base64 = await createBase64();
+    let img=new Image();
+    img.src=base64;
+    document.querySelector('#result').appendChild(img);
+    img.alt=createTimeStamp();
+    img.addEventListener('click',e=>{
+        e.preventDefault();
+        for (const im of document.querySelectorAll('#result img')) {
+            im.classList.remove('select');
+        };
+        img.classList.add('select');
+        document.querySelector('#display_timestamp').innerText=img.alt;
+        document.querySelector('#submit_button').removeAttribute('disabled');
+    })
+}
+
 async function download() {
     let base64 = await createBase64();
     let a = document.createElement('a')
@@ -275,6 +368,8 @@ async function download() {
 
 async function submit() {
     if (!animateIsFinish) return;
+    let im=document.querySelector('#result .select');
+    if(!im)return;
     disableCreateButtons();
 
     // try {
@@ -285,14 +380,17 @@ async function submit() {
 
     let message = document.querySelector('#success_message');
     message.style.display = "block";
-    let base64;
-    if (window.createType == 'gif' && window.ctxs && window.ctxs.length > 0) {
-        message.innerHTML = `- gif - create`;
-        await sleep(200);
-        base64 = await createGif(window.ctxs, 1000 / window.fps);
-    }
 
-    if (window.createType == 'png') base64 = getTargetResult();
+    let base64=im.src;
+
+    // if (window.createType == 'gif' && window.ctxs && window.ctxs.length > 0) {
+    //     // message.innerHTML = `- gif - create`;
+    //     // await sleep(200);
+
+    //     // base64 = await createGif(window.ctxs, 1000 / window.fps);
+    // }
+
+    // if (window.createType == 'png') base64 = getTargetResult();
     message.innerHTML = `- ipfs - init`;
 
 
@@ -310,7 +408,7 @@ async function submit() {
         title: _TITLE,
         description: "Co-Creation: " + _DES + " + DEVICE ID-" + window.visitorId,
         image: "/ipfs/" + imageHash,
-        timestamp: window.timestamp,
+        timestamp: im.alt,
         visitorId: window.visitorId
     }
     console.log(metadata);
@@ -361,13 +459,30 @@ function createCubesImage(width = 3, height = 3, padding = 0.1) {
         for (let index = height / 2; index > -height / 2; index--) {
             let c = cube.clone();
             c.material = c.material.clone();
-            c.position.x = x;
-            c.position.y = 0 + index + index * padding;
-            c.position.z = -2
+            c.userData.toPosition={
+                x,
+                y:0 + index + index * padding,
+                z : -2
+            };
+            // c.position.x = Math.random()*100;
+            // c.position.y = Math.random()*100;
+            // c.position.z = -2;
+            c.position.x=x;
+            c.position.y=0 + index + index * padding;
+            c.position.z =window.enable_zindex? Math.random()*100:-2;
+            c.userData.fromPosition=c.position.clone();
+            c.userData.time=0;
+            // computeAnimate({
+            //     x:Math.random()*100,
+            //     y:Math.random()*100,
+            //     z:Math.random()*100,
+            // },c.userData.position).then(positions=>{
+            //     c.userData.positions=positions;
+            // })
                 // scene.add(c);
             cubesChildren.push(c);
-            c._baseX = i;
-            c._baseY = index;
+            c.userData._baseX = i;
+            c.userData._baseY = index;
         };
         cubes.push(cubesChildren)
     }
@@ -377,8 +492,8 @@ function createCubesImage(width = 3, height = 3, padding = 0.1) {
 function updateCubesPosition(padding = 0.5) {
     for (const row of window.cubes) {
         for (const c of row) {
-            c.position.x = c._baseX + padding * c._baseX;
-            c.position.y = c._baseY + padding * c._baseY;
+            c.position.x = c.userData._baseX + padding * c.userData._baseX;
+            c.position.y = c.userData._baseY + padding * c.userData._baseY;
         }
     }
 }
@@ -471,6 +586,7 @@ function getSceneCenter(scene) {
     return [(minX + maxX) / 2, (minY + maxY) / 2]
 }
 
+
 function create() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -482,9 +598,6 @@ function create() {
     let mouseX = 0,
         mouseY = 0;
 
-    // 画布的中点
-    let windowHalfX = width / 2 + canvas.offsetLeft;
-    let windowHalfY = height / 2 + canvas.offsetTop;
     // console.log(windowHalfX,windowHalfY)
     // console.log(document.querySelector('#target').style.width)
     // canvas.width=width;
@@ -555,14 +668,25 @@ function create() {
     controls.enablePan = true;
     controls.enableDamping = true;
     // controls.listenToKeyEvents( renderer.domElement) 
-
+    const raycaster = new THREE.Raycaster();
+	const mouse = new THREE.Vector2( 1, 1 );
 
     function onPointerMove(event) {
         if (event.isPrimary === false) return;
+
+        let bound=canvas.getBoundingClientRect()
+        let windowHalfX = width / 2 + bound.x;
+        let windowHalfY = height / 2 + bound.y;
+
         // console.log(event.clientX,event.clientY)
         mouseX = event.clientX - windowHalfX;
-        mouseY = event.clientY - windowHalfY;
-
+        mouseY =- (event.clientY - windowHalfY);
+        // console.log(mouseX,mouseY)
+        // console.log(event.clientX-canvas.offsetLeft)
+        // 以画布中心为原点0，0； 右上角1，1；左下角 -1，-1
+        mouse.x = ( (event.clientX-bound.x) / width ) * 2 - 1;
+		mouse.y = - ( (event.clientY-bound.y) / height) * 2 + 1;
+        // console.log(mouse)
         //  控制在画布范围内
         // closeChangeCamera=!!(mouseX>=width/2||mouseX<-width/2||mouseY>=height/2||mouseY<-height/2)
 
@@ -574,36 +698,142 @@ function create() {
 
 
     function onWindowResize() {
-        windowHalfX = width / 2 + canvas.offsetLeft;
-        windowHalfY = height / 2 + canvas.offsetTop;
+        // let bound=canvas.getBoundingClientRect()
+        // let windowHalfX = width / 2 + bound.x;
+        // let windowHalfY = height / 2 + bound.y;
+
+        // windowHalfX = width / 2 + canvas.offsetLeft;
+        // windowHalfY = height / 2 + canvas.offsetTop;
         // camera.aspect = window.innerWidth / window.innerHeight;
         // camera.updateProjectionMatrix();
         // renderer.setSize( window.innerWidth, window.innerHeight );
     }
 
     function render() {
+       
         controls.update();
-        // console.log('animate')
-        if (!window.animateIsFinish) {
+      
+        if(mouseX!=null && mouseY!=null){
+            // camera.position.x += (mouseX - camera.position.x) * 0.00001;
+            // camera.position.y += (-mouseY - camera.position.y) * 0.00001;
+            // camera.rotation.x += (mouseX - camera.rotation.x) * 0.0000001;
+            // camera.rotation.y += (-mouseY - camera.rotation.y) * 0.0000001;
+        }
+        
 
-            let count = 30;
+        // https://threejs.org/docs/index.html?q=raycast#api/en/core/Raycaster
+        raycaster.setFromCamera( mouse, camera );
+        const intersects = raycaster.intersectObjects( scene.children );
+       
+        for ( let i = 0; i < intersects.length; i ++ ) {
+            // intersects[ i ].object.material.color.set( 0xff0000 );
+            intersects[ i ].object.scale.set(1.5,1.5,1.5);
+            // console.log(intersects[i].object)
+            // uuids[intersects[i].object.uuid]=true;
+        };
+        for (const mesh of scene.children) {
+            if(mesh.type=='Mesh'){
+                // mesh.scale.set(1,1,1);
+                if(mesh.scale.x>1&&mesh.scale.y>1&&mesh.scale.z>1){
+                    mesh.scale.x-=0.1*window.input_speed;
+                    mesh.scale.y-=0.1*window.input_speed;
+                    mesh.scale.z-=0.1*window.input_speed;
+                }
+            }
+        }
+
+        // camera.lookAt( scene.position );
+        // console.log(camera.position.x,camera.position.y)
+        renderer.render(scene, camera);
+    
+    }
+
+    function animate() {
+        render();
+        // 
+        // if(!window.preTime) window.preTime=Date.now();
+        // // 记录动画
+        // if(window.ctxs&&window.ctxs.length<fps*window.animateTime/1000){
+        //     if(Date.now()-window.preTime>(1000 / window.fps)){
+        //         window.preTime=Date.now();
+        //         renderer.render(scene, camera);
+        //         let ctx=canvasClone2Ctx(renderer.domElement);
+        //         window.ctxs.push(ctx);
+        //     };
+        // }else{
+        //     window.animateIsFinish = true;
+        //     enableCreateButtons();
+        // };
+    
+        requestAnimationFrame(animate);
+        // console.log(Date.now()-t1)
+    };
+
+
+
+    document.body.style.touchAction = 'none';
+    document.body.addEventListener('pointermove', onPointerMove);
+    // document.querySelector('#target').addEventListener('mousewheel', onMousewheel, false);
+    window.addEventListener('resize', onWindowResize);
+
+    animate();
+
+    window.renderer = renderer;
+    window.scene = scene;
+    window.camera = camera;
+};
+
+
+function runAnimateInRender(step=0.1){
+    let count = 30;
             if(window.enable_rotation){
                 for (const row of window.cubes) {
                     for (const cube of row) {
-                        cube.rotation.x += window.input_speed * Math.random();
-                        cube.rotation.y += window.input_speed * Math.random();
+                        cube.rotation.x += window.input_speed ;
+                        cube.rotation.y += window.input_speed ;
                         // cube.position.z = Math.random()>0.5?-0.3:0;
                         if (count > 0) {
                             //cube.scale.x += Math.random()*(Math.random()>0.5?-0.02:0.02);
                             // Spherify
-                            cube.morphTargetInfluences[0] = window.spherify
+                            cube.morphTargetInfluences[0] += window.input_speed*window.spherify;
+                            if(Math.abs(cube.morphTargetInfluences[0])>1)cube.morphTargetInfluences[0]/=Math.abs(cube.morphTargetInfluences[0]);
                                 // Twist
-                            cube.morphTargetInfluences[1] = window.twist;
+                            cube.morphTargetInfluences[1] +=window.input_speed*window.twist;
+                            if(Math.abs(cube.morphTargetInfluences[1])>1)cube.morphTargetInfluences[1]=Math.max(0,cube.morphTargetInfluences[1]/Math.abs(cube.morphTargetInfluences[1]));
+                            // console.log(cube.morphTargetInfluences[0],cube.morphTargetInfluences[1])
                             count--;
                         };
                     }
-                }
+                };
+                // scene
+                // scene.rotation.y+=window.input_speed * Math.random();
+            };
+
+            
+            // position
+            if(window.enable_zindex){
+                for (const row of window.cubes) {
+                    for (const cube of row) {
+                        // cube.userData.positions[];
+                        // cube.userData.time+=500*window.input_speed;
+                        // let s=Math.min(cube.userData.time/window.animateTime,1);
+                        // console.log(step)
+                        if(step<1){
+                            let newPos=seekAnimate(cube.userData.fromPosition,cube.userData.toPosition,step);
+                            // cube.position.x=newPos.x;
+                            // cube.position.y=newPos.y;
+                            cube.position.z=newPos.z;
+                        }else{
+                            // cube.position.x=cube.userData.toPosition.x;
+                            // cube.position.y=cube.userData.toPosition.y;
+                            cube.position.z=cube.userData.toPosition.z;
+                        }
+                        
+                    }
+                };
+                
             }
+            
             
             const time = Date.now() * 0.0035;
 
@@ -623,39 +853,10 @@ function create() {
             light4.position.y = Math.cos(time * 0.7) * 40;
             light4.position.z = Math.sin(time * 0.5) * 30;
 
-
-            camera.position.x += (mouseX - camera.position.x) * 0.0001;
-            camera.position.y += (-mouseY - camera.position.y) * 0.0001;
-            camera.rotation.x += (mouseX - camera.rotation.x) * 0.000001;
-            camera.rotation.y += (-mouseY - camera.rotation.y) * 0.000001;
-
-        }
-
-        // camera.lookAt( scene.position );
-        // console.log(camera.position.x,camera.position.y)
-        renderer.render(scene, camera);
-
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        render();
-    };
-
-
-
-    document.body.style.touchAction = 'none';
-    document.body.addEventListener('pointermove', onPointerMove);
-    // document.querySelector('#target').addEventListener('mousewheel', onMousewheel, false);
-    window.addEventListener('resize', onWindowResize);
-
-    animate();
-
-    window.renderer = renderer;
-    window.scene = scene;
-    window.camera = camera;
-};
-
+            // let ctx = canvasClone2Ctx(renderer.domElement);
+            // window.ctxs.push(ctx);
+            
+}
 
 
 function drawText() {
@@ -705,9 +906,10 @@ function openFile() {
 }
 
 function clearMap() {
-    document.querySelector('#input_map').innerText = 'MAP';
+    document.querySelector('#input_map').innerText = 'OPEN';
     document.querySelector('#input_width').removeAttribute('disabled');
     document.querySelector('#input_height').removeAttribute('disabled');
+    document.querySelector('#input_map').removeAttribute('disabled');
     window.mapImage = null;
     window.map_data = null;
     updateTexture(window.mapImage);
@@ -801,7 +1003,9 @@ function updateTexture(url) {
         updateCubesImage(window.input_width, window.input_height, window.input_padding);
     } else {
         createImageFromUrl(url).then(async im => {
-            
+            document.querySelector('#input_width').setAttribute('disabled',true);
+            document.querySelector('#input_height').setAttribute('disabled',true);
+            document.querySelector('#input_map').setAttribute('disabled',true);
             // if(Math.max(im.naturalHeight,im.naturalWidth)){}
 
             let si = splitImage(im, Math.max(im.naturalHeight,im.naturalWidth)/Math.max(Math.max(im.naturalHeight,im.naturalWidth)/10,_MAX_SIZE));
@@ -828,6 +1032,8 @@ async function updateCubesImageAndTextures(width, height, data) {
         let count = width * height;
         for (let index = 0; index < data.length; index++) {
             for (let i = 0; i < data[index].length; i++) {
+                // 可中断
+                if(window.mapImage==null) return document.querySelector('#input_map').innerText='OPEN';
 
                 let c = document.createElement('canvas'),
                     ctx = c.getContext('2d');
@@ -835,9 +1041,16 @@ async function updateCubesImageAndTextures(width, height, data) {
                 c.height = data[index][i].height;
                 // console.log(data[index][i].imgData)
                 ctx.putImageData(data[index][i].imgData, 0, 0);
-
+                
                 if (!textures[index]) textures[index] = []
-                textures[index][i] = await loadTexture(c.toDataURL());
+
+                if(!data[index][i].texture){
+                    textures[index][i] = await loadTexture(c.toDataURL());
+                    data[index][i].texture=textures[index][i];
+                }else{
+                    textures[index][i]=data[index][i].texture;
+                }
+                
                 count--;
                 document.querySelector('#input_map').innerText = (100 * (width * height - count) / (width * height)).toFixed(1) + '%'
             }
@@ -849,6 +1062,7 @@ async function updateCubesImageAndTextures(width, height, data) {
                 updateMeshTexture(window.cubes[index][i], texture);
             }
         };
+        window.map_data=data;
     }
 
     window.renderer.render(window.scene, window.camera);
@@ -887,11 +1101,22 @@ function updateSpeed(e) {
 
 function updateRotation(e){
     window.enable_rotation=!!e.target.checked;
-    if(window.enable_rotation){
+    if(window.enable_rotation||window.enable_rotation){
         document.querySelector('#input_speed').removeAttribute('disabled');
     }else{
         document.querySelector('#input_speed').setAttribute('disabled',true);
     }
+}
+
+async function updateZindex(e){
+    window.enable_zindex=!!e.target.checked;
+    if(window.enable_zindex||window.enable_rotation){
+        document.querySelector('#input_speed').removeAttribute('disabled');
+    }else{
+        document.querySelector('#input_speed').setAttribute('disabled',true);
+    };
+    // updateCubesImage(window.input_width,window.input_height,window.input_padding);
+    await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data);
 }
 
 function updateIntensity(e){
