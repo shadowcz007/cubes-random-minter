@@ -18,7 +18,8 @@ window.createType = 'gif';
 window.input_speed = 0.01;
 window.nextMapIndex=1;
 window.nextMapMaxIndex=2;
-window.input_background='#000000'
+window.input_background='#000000';
+
 
 
 initApp();
@@ -103,6 +104,7 @@ function initApp() {
 
     // update cubes
     document.querySelector('#input_background').oninput=updateBackgroundColor;
+    
     document.querySelector('#input_map').onclick = openFile;
     document.querySelector('#input_clear_map').onclick = clearMap;
     document.querySelector('#input_next').onclick=nextMap;
@@ -448,7 +450,8 @@ function createCube() {
     });
     // const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
     const cube = new THREE.Mesh(geometry, material);
-    cube.position.y = 1.2;
+    // cube.position.y = 1.2;
+    // cube.scale.set(scale,scale,scale)
     return cube;
 }
 
@@ -520,7 +523,7 @@ function cubesAddScene(cubes, scene) {
 
 function createGeometry() {
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1, 32, 32, 32);
+    const geometry = new THREE.BoxGeometry(1,1,1, 32, 32, 32);
 
     // create an empty array to  hold targets for the attribute we want to morph
     // morphing positions and normals is supported
@@ -1133,6 +1136,11 @@ function updateBackgroundColor(e){
     // console.log(e.target.value)
     window.input_background=e.target.value;
 }
+
+function map (n, start1, stop1, start2, stop2) {
+    return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2
+  }
+
 
 // login();
 
