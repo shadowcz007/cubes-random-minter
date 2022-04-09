@@ -18,6 +18,7 @@ window.createType = 'gif';
 window.input_speed = 0.01;
 window.nextMapIndex=1;
 window.nextMapMaxIndex=2;
+window.input_background='#000000'
 
 
 initApp();
@@ -94,13 +95,14 @@ function initApp() {
     document.querySelector("#app").style.display = "flex";
     document.querySelector("#submit_button").onclick = submit;
     document.querySelector("#create").onclick = runAnimate;
-    document.querySelector('#download').onclick = download;
+    // document.querySelector('#download').onclick = download;
     // document.querySelector("#target").onclick = () => document.querySelector("#create").click();
     document.querySelector("#set_gif").onclick = () => changeCreateType("gif");
     document.querySelector("#set_png").onclick = () => changeCreateType("png");
 
 
     // update cubes
+    document.querySelector('#input_background').oninput=updateBackgroundColor;
     document.querySelector('#input_map').onclick = openFile;
     document.querySelector('#input_clear_map').onclick = clearMap;
     document.querySelector('#input_next').onclick=nextMap;
@@ -173,7 +175,7 @@ function disableCreateButtons() {
     document.querySelector("#set_png").setAttribute('disabled', true);
     document.querySelector("#create").setAttribute('disabled', true);
     // document.querySelector("#submit_button").setAttribute('disabled', true);
-    document.querySelector("#download").setAttribute('disabled', true);
+    // document.querySelector("#download").setAttribute('disabled', true);
     document.querySelector("#success_message").style.display = 'none';
 
 }
@@ -183,7 +185,7 @@ function enableCreateButtons() {
     document.querySelector("#set_png").removeAttribute('disabled');
     document.querySelector("#create").removeAttribute('disabled');
     // document.querySelector("#submit_button").removeAttribute('disabled');
-    document.querySelector("#download").removeAttribute('disabled');
+    // document.querySelector("#download").removeAttribute('disabled');
 };
 
 
@@ -357,14 +359,14 @@ async function createBase64ForResult(){
     })
 }
 
-async function download() {
-    let base64 = await createBase64();
-    let a = document.createElement('a')
-    a.href = encodeURI(base64)
-    a.setAttribute('name', _TITLE + '.' + window.createType)
-    a.setAttribute('download', _TITLE + '.' + window.createType)
-    a.click()
-}
+// async function download() {
+//     let base64 = await createBase64();
+//     let a = document.createElement('a')
+//     a.href = encodeURI(base64)
+//     a.setAttribute('name', _TITLE + '.' + window.createType)
+//     a.setAttribute('download', _TITLE + '.' + window.createType)
+//     a.click()
+// }
 
 async function submit() {
     if (!animateIsFinish) return;
@@ -589,7 +591,7 @@ function getSceneCenter(scene) {
 
 function create() {
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(window.input_background);
 
     let canvas = document.querySelector('#target'),
         width = parseInt(getComputedStyle(document.querySelector('#target')).width),
@@ -720,6 +722,7 @@ function create() {
             // camera.rotation.y += (-mouseY - camera.rotation.y) * 0.0000001;
         }
         
+        scene.background=new THREE.Color(window.input_background);
 
         // https://threejs.org/docs/index.html?q=raycast#api/en/core/Raycaster
         raycaster.setFromCamera( mouse, camera );
@@ -901,6 +904,7 @@ function openFile() {
         loadFile(curFiles[0]);
         document.querySelector('#input_width').setAttribute('disabled', true);
         document.querySelector('#input_height').setAttribute('disabled', true);
+        disableCreateButtons()
     })
     input.click()
 }
@@ -1001,6 +1005,7 @@ function updateTexture(url) {
     if (!(window.cubes && window.cubes.length > 0)) return;
     if (!url) {
         updateCubesImage(window.input_width, window.input_height, window.input_padding);
+        
     } else {
         createImageFromUrl(url).then(async im => {
             document.querySelector('#input_width').setAttribute('disabled',true);
@@ -1017,7 +1022,7 @@ function updateTexture(url) {
             document.querySelector('#input_width').value = window.input_width;
             document.querySelector('#input_height').value = window.input_height;
             await updateCubesImageAndTextures(window.input_width, window.input_height, window.map_data)
-
+            enableCreateButtons();
         });
     }
 
@@ -1122,6 +1127,11 @@ async function updateZindex(e){
 function updateIntensity(e){
     window.input_intensity=parseFloat(e.target.value);
     light5.intensity=window.input_intensity;
+}
+
+function updateBackgroundColor(e){
+    // console.log(e.target.value)
+    window.input_background=e.target.value;
 }
 
 // login();
