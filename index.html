@@ -113,6 +113,7 @@
             border-radius: 12px;
             height: 28px;
             margin: 0;
+            margin-right: 12px;
             border: 0;
             padding: 0 8px;
             font-size: 12px;
@@ -158,7 +159,7 @@
             margin: 4px 0;
             background-color: #efefef;
             border-radius: 12px;
-            width: 220px;
+            width: 240px;
             align-items: center;
         }
         
@@ -176,13 +177,22 @@
         .input-base input {
             margin-right: 12px;
             width: 100%;
+            border-radius: 6px;
         }
         
         .input-base input[type="number"] {
             margin-top: 8px;
             margin-bottom: 8px
         }
-      
+        .input-base input[type="text"]{
+            height: 20px;
+            outline: none;
+            border: 1px solid #cecece;
+            padding: 4px;
+        }
+        .input-base input[type="text"]:focus{
+            border: 1px solid  #00bcd4;
+        }
         .input-base img{
             width: 56px;
             height: 56px;
@@ -268,6 +278,12 @@
                         <canvas id="target"></canvas>
                         <div class="buttons">
                             <div class="input-base">
+                                <div class="title">NAME</div>
+                                <input type="text" id="input_name" autocomplete="off" placeholder="monkey">
+                                <button id="input_random" class="button-small button-hover">RANDOM</button>
+                            </div>
+                            
+                            <div class="input-base">
                                 <div class="title">BACKGROUND</div>
                                 <input type="color"  id="input_background">
                             </div>
@@ -325,10 +341,7 @@
                                
                             </div>
 
-                            <!-- <div class="button-icon">
-                                <button id="input_random" class="button-left">RANDOM</button>
-                                <button id="input_clear_random" class="button-right">X</button>
-                            </div> -->
+                            
 
                         </div>
                     </div>

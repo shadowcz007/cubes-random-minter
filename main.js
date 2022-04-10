@@ -12,6 +12,8 @@ const _TITLE = window.location.pathname.slice(1, -1).replace(/\/.*/ig, '') || "n
 const _DES = window.location.hostname + window.location.pathname;
 const _MAX_SIZE = 30;
 
+const _RANDOM_NAME= ["active", "barmy", "happy", "delighted", "ecstatic", "concerned", "worried", "afraid", "puzzled", "ambivalent", "lonely", "sad", "angry", "stressed", "irritable", "calm", "relaxed", "jumpy", "cross", "fuzzy", "sleepy", "sneezy", "healthy", "unstable", "stable", "anxious", "confident", "sparkly", "shocked", "surprised"];
+
 window.cubes = [];
 window.animateIsFinish = true;
 window.createType = 'gif';
@@ -103,6 +105,7 @@ function initApp() {
 
 
     // update cubes
+    document.querySelector('#input_random').onclick=updateRandom;
     document.querySelector('#input_background').oninput=updateBackgroundColor;
     
     document.querySelector('#input_map').onclick = openFile;
@@ -260,6 +263,9 @@ function runAnimate() {
     // }, window.animateTime || 1000);
 
 
+
+}
+
     // 打乱
     function shuffle(arr) {
         let arrNew = [...arr]
@@ -270,7 +276,6 @@ function runAnimate() {
             // var arr = [1, 2, 3, 4, 5];
         return [...arrNew.sort(randomsort)]
     }
-}
 
 async function createGifFromAnimate(t = 2000, fps = 12) {
     window.ctxs = [];
@@ -1135,6 +1140,54 @@ function updateIntensity(e){
 function updateBackgroundColor(e){
     // console.log(e.target.value)
     window.input_background=e.target.value;
+}
+
+function updateRandom(){
+    window.input_name=shuffle(_RANDOM_NAME)[0];
+    document.querySelector('#input_name').value= window.input_name;
+    let code=getCodes(window.input_name);
+
+    let backgroundColor=document.querySelector('#input_background');
+    window.input_background='#'+(new THREE.Color((code%255)/255,(code%255)/255,(code%255)/255)).getHexString();
+    backgroundColor.value=window.input_background;
+    backgroundColor.dispatchEvent(new Event('input'));
+
+    let brightness=document.querySelector('#input_intensity');
+    window.input_intensity =parseFloat(brightness.step)* (code%((parseFloat(brightness.max)-parseFloat(brightness.min))/parseFloat(brightness.step)));
+    brightness.value=window.input_intensity;
+    brightness.dispatchEvent(new Event('input'));
+
+    let padding=document.querySelector('#input_padding');
+    window.input_padding =parseFloat(padding.step)* (code%((parseFloat(padding.max)-parseFloat(padding.min))/parseFloat(padding.step)));
+    padding.value=window.input_padding;
+    padding.dispatchEvent(new Event('input'));
+
+    let width=document.querySelector('#input_width');
+    window.input_width =parseFloat(width.step)* (code%((parseFloat(width.max)-parseFloat(width.min))/parseFloat(width.step)));
+    width.value=window.input_width;
+    width.dispatchEvent(new Event('input'));
+
+    let height=document.querySelector('#input_height');
+    window.input_height =parseFloat(height.step)* (code%((parseFloat(height.max)-parseFloat(height.min))/parseFloat(height.step)));
+    height.value=window.input_height;
+    height.dispatchEvent(new Event('input'));
+
+    let speed=document.querySelector('#input_speed');
+    window.input_speed =parseFloat(speed.step)* (code%((parseFloat(speed.max)-parseFloat(speed.min))/parseFloat(speed.step)));
+    speed.value=window.input_speed;
+    speed.dispatchEvent(new Event('input'));
+}
+
+
+
+
+function getCodes(text){
+    let ts=text.split('')
+    let codes=[];
+    for (let name of ts) {
+        codes.push(name.charCodeAt());
+    };
+    return parseInt(codes.join(''))
 }
 
 function map (n, start1, stop1, start2, stop2) {
